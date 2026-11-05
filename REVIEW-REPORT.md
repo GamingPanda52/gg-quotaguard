@@ -12,7 +12,7 @@ Note: `READY FOR OWNER REVIEW` does not authorize automatic publication or imply
 
 ## Scope and provenance
 
-- Sanitized source checkout: `C:\Users\Pixel\.gemini\antigravity\scratch\gg-quotaguard`
+- Sanitized source checkout: `<local-checkout>/gg-quotaguard`
 - Isolated non-hardlinked review clone: session state `files\gg-quotaguard-review`
 - Review branch: `review/adversarial-audit`
 - Starting commit: `d5d368fdb2f8236acbc5067ddcdb4906f200b753`
@@ -84,7 +84,7 @@ ledger admitted only the independently allowed single reservation.
 
 ## Findings
 
-### P1 â€” Duplicate JSON keys were accepted
+### P1 Ã¢â‚¬â€ Duplicate JSON keys were accepted
 
 **Baseline:** `gg_quotaguard.py:52` used default `json.loads`, which silently
 keeps the last value for duplicate keys. A synthetic config containing two
@@ -97,7 +97,7 @@ ambiguous configuration must reject before measurement or approval.
 
 Evidence: `review-evidence\duplicate-json-key.md`.
 
-### P2 â€” Random reservation-ID failure escaped the JSON/exit-2 contract
+### P2 Ã¢â‚¬â€ Random reservation-ID failure escaped the JSON/exit-2 contract
 
 **Baseline:** forcing `secrets.token_hex()` to raise `RuntimeError` allowed the
 exception to escape `main()` rather than returning one JSON rejection object
@@ -109,7 +109,7 @@ Regression: `LedgerTests.test_random_id_generation_failure_rejects`.
 
 Evidence: `review-evidence\failure-output-contract.md`.
 
-### P2 â€” argparse errors produced no JSON decision
+### P2 Ã¢â‚¬â€ argparse errors produced no JSON decision
 
 **Baseline:** malformed/unknown command-line syntax raised `SystemExit(2)`,
 wrote argparse usage/error text to stderr, and emitted no JSON stdout object.
@@ -123,7 +123,7 @@ rejection without argparse stderr. Regression coverage was updated in
 
 Evidence: `review-evidence\failure-output-contract.md`.
 
-### P2/P3 â€” Directory traversal is not an atomic snapshot
+### P2/P3 Ã¢â‚¬â€ Directory traversal is not an atomic snapshot
 
 `scan_usage()` at `gg_quotaguard.py:138` validates recorded paths after
 enumeration, but a new file can be created after its directory has been
@@ -133,7 +133,7 @@ states that traversal is not a snapshot and requires complete visibility and
 coordination with writers. Do not claim directory mode is safe against
 uncoordinated external writers.
 
-### P3 â€” SQLite lock timeout and stranded initialization
+### P3 Ã¢â‚¬â€ SQLite lock timeout and stranded initialization
 
 The ledger uses a one-second SQLite timeout and `BEGIN IMMEDIATE`
 (`gg_quotaguard.py:263-266`). A long measurement while another process holds
