@@ -24,6 +24,11 @@ class Block(Exception):
     pass
 
 
+class RejectingArgumentParser(argparse.ArgumentParser):
+    def error(self, message):
+        raise Block('invalid command arguments')
+
+
 def integer(value, label, minimum=0):
     if isinstance(value, bool) or not re.fullmatch(r'[0-9]{1,19}', str(value)):
         raise Block(label + ' must be an unsigned integer in bytes')
@@ -33,9 +38,16 @@ def integer(value, label, minimum=0):
     return result
 
 
+def _reject_duplicate_keys(pairs):
+    keys = [k for k, _ in pairs]
+    if len(keys) != len(set(keys)):
+        raise Block('duplicate configuration keys are forbidden')
+    return dict(pairs)
+
+
 def load_config(path):
     try:
-        c = json.loads(Path(path).read_text(encoding='utf-8'))
+        c = json.loads(Path(path).read_text(encoding='utf-8'), object_pairs_hook=_reject_duplicate_keys)
     except (OSError, ValueError):
         raise Block('configuration missing or invalid JSON') from None
     allowed = {'mode', 'target', 'directories', 'quota_bytes', 'reserve_bytes',
@@ -275,7 +287,7 @@ def ledger(c, initialize=False):
 
 
 def request_hash(value):
-    if not isinstance(value, str) or not 1 <= len(value) <= 256 or any(ord(c) < 32 for c in value):
+    if not isinstance(value, str) or not 1 <= len(value) <= 256 or not value.isprintable() or any(ord(c) < 32 or ord(c) == 127 for c in value):
         raise Block('request ID must contain 1 to 256 printable characters')
     return hashlib.sha256(value.encode()).hexdigest()
 
@@ -326,7 +338,7 @@ def diagnose(target):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
+    parser = RejectingArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument('--version', action='version', version='GG QuotaGuard ' + VERSION)
     sub = parser.add_subparsers(dest='command', required=True)
     for name in ['init', 'check', 'inspect', 'release', 'status']:
@@ -351,7 +363,13 @@ def main(argv=None):
         else:
             c = load_config(args.config)
             if args.command == 'check':
-                request_id = args.request_id if args.request_id is not None else secrets.token_hex(16)
+                if args.request_id is not None:
+                    request_id = args.request_id
+                else:
+                    try:
+                        request_id = secrets.token_hex(16)
+                    except (NotImplementedError, OSError, RuntimeError):
+                        raise Block('unable to generate a secure reservation ID') from None
                 result, code = check(c, args.size, request_id)
             elif args.command == 'init':
                 # Validate measurement before creating durable state.
@@ -380,6 +398,10 @@ def main(argv=None):
     except (OSError, sqlite3.Error, ValueError, TypeError, OverflowError, RecursionError):
         # Exceptions may contain private paths, usernames, or command output.
         result, code = {'decision': 'reject', 'reason': 'storage/configuration/state operation failed; inspect permissions, paths and ledger integrity'}, 2
+    except Exception:
+        # Any other failure must still reject as JSON with exit 2 (never a traceback or exit 1,
+        # which is the "insufficient space" status). Details are intentionally not printed.
+        result, code = {'decision': 'reject', 'reason': 'unexpected internal failure; no reservation is approved'}, 2
     print(json.dumps(result, sort_keys=True))
     return code
 
