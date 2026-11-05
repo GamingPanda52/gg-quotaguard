@@ -1,0 +1,11 @@
+{
+  "mode": "quota",
+  "target": "/home/YOUR_ACCOUNT/torrents",
+  "quota_device": "/dev/REPLACE_WITH_VERIFIED_DEVICE",
+  "reserve_bytes": 50000000000,
+  "state_dir": "/home/YOUR_ACCOUNT/.local/state/gg-quotaguard",
+  "scope_confirmed": false,
+  "startup_pending_confirmed": false,
+  "scan_timeout_seconds": 10,
+  "max_entries": 250000
+}

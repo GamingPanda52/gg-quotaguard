@@ -1,0 +1,27 @@
+name: Tests
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.9', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m py_compile gg_quotaguard.py
+      - run: python -m unittest discover -s tests -v
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose -f tests/docker/compose.yaml build
+      - run: docker compose -f tests/docker/compose.yaml run --rm unit-and-linux
+      - run: docker compose -f tests/docker/compose.yaml run --rm complete-view
+      - run: docker compose -f tests/docker/compose.yaml run --rm partial-view

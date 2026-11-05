@@ -1,0 +1,1 @@
+Synthetic quota-billed data omitted from the partial-view bind mount.

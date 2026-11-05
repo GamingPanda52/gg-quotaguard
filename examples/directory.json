@@ -1,0 +1,12 @@
+{
+  "mode": "directory",
+  "target": "/home/YOUR_ACCOUNT/torrents",
+  "directories": ["/home/YOUR_ACCOUNT"],
+  "quota_bytes": 1000000000000,
+  "reserve_bytes": 50000000000,
+  "state_dir": "/home/YOUR_ACCOUNT/.local/state/gg-quotaguard",
+  "scope_confirmed": false,
+  "startup_pending_confirmed": false,
+  "scan_timeout_seconds": 10,
+  "max_entries": 250000
+}

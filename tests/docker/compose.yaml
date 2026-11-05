@@ -1,0 +1,37 @@
+services:
+  unit-and-linux:
+    build:
+      context: ../..
+      dockerfile: tests/docker/Dockerfile
+    network_mode: none
+    read_only: true
+    tmpfs:
+      - /tmp:mode=1777,size=64m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+  complete-view:
+    build:
+      context: ../..
+      dockerfile: tests/docker/Dockerfile
+    network_mode: none
+    read_only: true
+    volumes:
+      - ./fixtures:/billed:ro
+    tmpfs:
+      - /tmp:mode=1777,size=16m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    command: [python, tests/docker/check_visibility.py, complete]
+  partial-view:
+    build:
+      context: ../..
+      dockerfile: tests/docker/Dockerfile
+    network_mode: none
+    read_only: true
+    volumes:
+      - ./fixtures/visible:/billed/visible:ro
+    tmpfs:
+      - /tmp:mode=1777,size=16m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    command: [python, tests/docker/check_visibility.py, partial]
