@@ -124,6 +124,13 @@ class ConfigTests(Workspace):
             with self.subTest(text=text), self.assertRaises(qg.Block):
                 qg.load_config(self.cfgfile)
 
+    def test_duplicate_json_keys_rejected(self):
+        # json.loads silently keeps the last duplicate; an ambiguous file must not change meaning.
+        base = json.dumps(self.config)
+        self.cfgfile.write_text(base[:-1] + ', "reserve_bytes": 1000000}', encoding='utf-8')
+        with self.assertRaises(qg.Block):
+            qg.load_config(self.cfgfile)
+
 
 class QuotaTests(unittest.TestCase):
     def test_unscaled_kib_and_stricter_soft_limit(self):
@@ -357,6 +364,15 @@ class LedgerTests(Workspace):
             measurement.assert_not_called()
             diagnostic.assert_not_called()
         self.assertFalse(Path(self.config['state_dir']).exists())
+
+    def test_unexpected_exception_is_reported_as_reject_without_traceback(self):
+        self.initialize()
+        with mock.patch.object(qg.secrets, 'token_hex', side_effect=NotImplementedError('no entropy source')), \
+             mock.patch.object(qg, 'measure', return_value=snapshot()):
+            code, result = self.invoke('check', '--config', self.save(), '--size', '1')
+        self.assertEqual(code, 2)
+        self.assertEqual(result['decision'], 'reject')
+        self.assertEqual(self.pending(), 0)
 
     def test_storage_failure_rolls_back_reservation(self):
         self.initialize()

@@ -33,9 +33,16 @@ def integer(value, label, minimum=0):
     return result
 
 
+def _reject_duplicate_keys(pairs):
+    keys = [k for k, _ in pairs]
+    if len(keys) != len(set(keys)):
+        raise Block('duplicate configuration keys are forbidden')
+    return dict(pairs)
+
+
 def load_config(path):
     try:
-        c = json.loads(Path(path).read_text(encoding='utf-8'))
+        c = json.loads(Path(path).read_text(encoding='utf-8'), object_pairs_hook=_reject_duplicate_keys)
     except (OSError, ValueError):
         raise Block('configuration missing or invalid JSON') from None
     allowed = {'mode', 'target', 'directories', 'quota_bytes', 'reserve_bytes',
@@ -380,6 +387,10 @@ def main(argv=None):
     except (OSError, sqlite3.Error, ValueError, TypeError, OverflowError, RecursionError):
         # Exceptions may contain private paths, usernames, or command output.
         result, code = {'decision': 'reject', 'reason': 'storage/configuration/state operation failed; inspect permissions, paths and ledger integrity'}, 2
+    except Exception:
+        # Any other failure must still reject as JSON with exit 2 (never a traceback or exit 1,
+        # which is the "insufficient space" status). Details are intentionally not printed.
+        result, code = {'decision': 'reject', 'reason': 'unexpected internal failure; no reservation is approved'}, 2
     print(json.dumps(result, sort_keys=True))
     return code
 
