@@ -2,7 +2,7 @@
 
 Use these prompts in the **private GG QuotaGuard repository**. Run one review with GitHub Copilot's coding agent and one with Claude Code. Give each reviewer a separate branch or checkout, then compare the findings before combining patches. A second reviewer should independently challenge the accounting model rather than simply approve the first reviewer's changes.
 
-Current recorded baseline before independent review: **59 passing tests on Linux; 47 passing and 12 skipped on Windows; nine actual isolated Autobrr external-filter cases passed. Docker execution is pending CI.** Check [TESTING.md](TESTING.md) for the current evidence; these figures are a starting point, not a certification. Windows skips must not be counted as Linux coverage.
+Current recorded baseline before independent review: **59 passing tests on Linux; 47 passing and 12 skipped on Windows; nine actual isolated Autobrr external-filter cases passed. GitHub Actions also passed the unprivileged Docker suite and complete/partial bind-mount fixtures.** Check [TESTING.md](TESTING.md) for the current evidence; these figures are a starting point, not a certification. Windows skips must not be counted as Linux coverage.
 
 The intended Autobrr argument template contains only the numeric size macro:
 

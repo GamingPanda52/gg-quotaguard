@@ -44,7 +44,8 @@ A direct CLI success does not establish an actual Autobrr integration. An extern
 | Authorized HBD host | Read-only account quota and mount probes | Exact finite user quota accessible over SSH; target filesystem independently identified. |
 | Isolated native Autobrr 1.90.0 | Actual external-filter execution through `POST /api/filters/external/test` | All nine synthetic cases below produced the expected result. |
 | Isolated native Autobrr 1.90.0 | Service restart and reservation reconciliation | 4,500,000,000 synthetic reserved bytes persisted across restart; explicitly reconciled after verifying there were no configured indexers or clients; final pending bytes zero. |
-| Local Windows / HBD host | Docker execution availability | Not executed: no local engine; HBD account has no Docker daemon permission. |
+| GitHub Actions, unprivileged Docker | Full Linux suite plus complete/partial bind-mount visibility fixtures | 59 tests and both visibility fixtures passed in run `42058181423`. This is generic container coverage, not managed HBD container acceptance. |
+| Local Windows / HBD host | Docker execution availability | No local engine; HBD account has no Docker daemon permission. Docker coverage was run in GitHub Actions instead. |
 
 The tested QuotaGuard source has SHA-256 `83745030fcc696f9c903575c04419266994992e3235a774e617d603dfcfe8e96`. The isolated Autobrr installation uses upstream version 1.90.0. Its downloaded Linux x86-64 archive was checked against the upstream published checksum before installation: SHA-256 `ec6b85ae757e18a443115461eef1291c9e578bfbf9d0468b245efb604a9956a5`.
 
