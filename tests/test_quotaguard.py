@@ -78,7 +78,7 @@ class IntegerTests(unittest.TestCase):
     def test_request_ids_are_hashed_and_control_characters_rejected(self):
         self.assertEqual(len(qg.request_hash('private-release-name')), 64)
         self.assertNotIn('private', qg.request_hash('private-release-name'))
-        for bad in ['', 'x' * 257, 'secret\nname', 'secret\x00name', None]:
+        for bad in ['', 'x' * 257, 'secret\nname', 'secret\x00name', 'secret\x7fname', None]:
             with self.subTest(bad=bad), self.assertRaises(qg.Block):
                 qg.request_hash(bad)
 
@@ -356,20 +356,29 @@ class LedgerTests(Workspace):
                  mock.patch.object(qg, 'measure') as measurement, \
                  mock.patch.object(qg, 'diagnose') as diagnostic, \
                  contextlib.redirect_stderr(io.StringIO()) as errors, \
-                 self.assertRaises(SystemExit) as stopped:
-                qg.main(argv)
-            self.assertEqual(stopped.exception.code, 2)
-            self.assertTrue(errors.getvalue())
+                 contextlib.redirect_stdout(io.StringIO()) as output:
+                stopped = qg.main(argv)
+            self.assertEqual(stopped, 2)
+            self.assertEqual(errors.getvalue(), '')
+            self.assertEqual(json.loads(output.getvalue())['decision'], 'reject')
             config_loader.assert_not_called()
             measurement.assert_not_called()
             diagnostic.assert_not_called()
         self.assertFalse(Path(self.config['state_dir']).exists())
 
+    def test_random_id_generation_failure_rejects(self):
+        self.initialize()
+        config = self.save()
+        with mock.patch.object(qg.secrets, 'token_hex', side_effect=RuntimeError('entropy unavailable')):
+            code, result = self.invoke('check', '--config', config, '--size', '1')
+        self.assertEqual(code, 2, result)
+        self.assertEqual(result['decision'], 'reject')
+        self.assertEqual(self.pending(), 0)
+
     def test_unexpected_exception_is_reported_as_reject_without_traceback(self):
         self.initialize()
-        with mock.patch.object(qg.secrets, 'token_hex', side_effect=NotImplementedError('no entropy source')), \
-             mock.patch.object(qg, 'measure', return_value=snapshot()):
-            code, result = self.invoke('check', '--config', self.save(), '--size', '1')
+        with mock.patch.object(qg, 'measure', side_effect=RuntimeError('unexpected internal bug')):
+            code, result = self.invoke('check', '--config', self.save(), '--size', '1', '--request-id', 'r1')
         self.assertEqual(code, 2)
         self.assertEqual(result['decision'], 'reject')
         self.assertEqual(self.pending(), 0)
