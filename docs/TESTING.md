@@ -45,9 +45,12 @@ A direct CLI success does not establish an actual Autobrr integration. An extern
 | Isolated native Autobrr 1.90.0 | Actual external-filter execution through `POST /api/filters/external/test` | All nine synthetic cases below produced the expected result. |
 | Isolated native Autobrr 1.90.0 | Service restart and reservation reconciliation | 4,500,000,000 synthetic reserved bytes persisted across restart; explicitly reconciled after verifying there were no configured indexers or clients; final pending bytes zero. |
 | GitHub Actions, unprivileged Docker | Full Linux suite plus complete/partial bind-mount visibility fixtures | 59 tests and both visibility fixtures passed in run `42058181423`. This is generic container coverage, not managed HBD container acceptance. |
+| GitHub Actions, Ubuntu 22.04, Python 3.9 and 3.13 | Syntax checks and full suite; separate Docker job | All three jobs passed in [run 42058434997](https://github.com/GamingPanda52/gg-quotaguard/actions/runs/42058434997), testing commit `d5d368f`. |
 | Local Windows / HBD host | Docker execution availability | No local engine; HBD account has no Docker daemon permission. Docker coverage was run in GitHub Actions instead. |
 
 The tested QuotaGuard source has SHA-256 `83745030fcc696f9c903575c04419266994992e3235a774e617d603dfcfe8e96`. The isolated Autobrr installation uses upstream version 1.90.0. Its downloaded Linux x86-64 archive was checked against the upstream published checksum before installation: SHA-256 `ec6b85ae757e18a443115461eef1291c9e578bfbf9d0468b245efb604a9956a5`.
+
+The initial Python 3.9 CI job could not start on Ubuntu 26.04 because setup-python had no matching interpreter build. Pinning the interpreter matrix to Ubuntu 22.04 resolved that environment failure; the complete replacement run passed. The Docker job passed in both runs.
 
 The separate native test instance runs as a user systemd service, listens only on loopback, and has authentication configured. It has a disabled demonstration filter and no real indexers or download clients. Actual external-filter API tests exercised the installed guard with the following results:
 
